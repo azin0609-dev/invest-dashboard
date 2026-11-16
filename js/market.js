@@ -68,11 +68,11 @@ export function marketAgeDays(m, today) {
   return daysBetween(toDateStr(d), today);
 }
 
-/** 用使用者輸入的代號找序列：「0050」→「0050.TW」、「nvda」→「NVDA」 */
+/** 用使用者輸入的代號找序列：「0050」→「0050.TW」、「nvda」→「NVDA」、「btc」→「BTC-USD」 */
 export function findSeries(m, sym) {
   const s = String(sym || '').trim().toUpperCase();
   if (!s) return null;
-  for (const k of [s, `${s}.TW`, `${s}.TWO`]) {
+  for (const k of [s, `${s}.TW`, `${s}.TWO`, `${s}-USD`]) {
     const ser = m.series[k];
     if (ser && Array.isArray(ser.d) && ser.d.length) return { key: k, ...ser };
   }
@@ -149,12 +149,13 @@ export function fngOf(state, m) {
   return null;
 }
 
-export function fngLabel(v, rules) {
+/** CNN 的分級：0～24 極度恐懼、25～44 恐懼、45～55 中性、56～75 貪婪、76～100 極度貪婪 */
+export function fngLabel(v) {
   if (!isNum(v)) return '—';
-  if (v < rules.fear) return '極度恐懼';
+  if (v < 25) return '極度恐懼';
   if (v < 45) return '恐懼';
   if (v <= 55) return '中性';
-  if (v < rules.greed) return '貪婪';
+  if (v <= 75) return '貪婪';
   return '極度貪婪';
 }
 

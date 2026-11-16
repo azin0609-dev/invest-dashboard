@@ -23,6 +23,7 @@
   --s1: #2a78d6;
   --s2: #eb6834;
   --s3: #1baf7a;
+  --s4: #eda100;
   --st-good: #0ca30c;
   --st-warn: #fab219;
   --st-serious: #ec835a;
@@ -60,6 +61,7 @@
     --s1: #3987e5;
     --s2: #d95926;
     --s3: #199e70;
+    --s4: #c98500;
     --spark: #5d6c68;
     --grid: #26302e;
     --axis: #3a4643;
@@ -474,6 +476,51 @@ table.data th:first-child, table.data td:first-child { text-align: left; }
 .hb-val { position: absolute; top: 0; z-index: 1; margin-left: 4px; padding: 0 4px; background: var(--surface); border-radius: 4px; font-size: .8rem; white-space: nowrap; color: var(--text); font-variant-numeric: tabular-nums; }
 .cap-legend { height: 14px; }
 .cap-legend .cap-label { position: absolute; transform: translateX(-50%); font-size: .74rem; color: var(--muted); white-space: nowrap; }
+
+/* ===== 家人切換 ===== */
+.member-pick { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; }
+.member-pick button {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 6px 14px;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.member-pick button small { font-weight: 400; color: var(--muted); font-size: .75rem; }
+.member-pick button.on { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.member-pick button.on small { color: var(--primary-ink); opacity: .85; }
+.member-pick button.add { border-style: dashed; color: var(--primary); justify-content: center; }
+.warn-text { color: var(--warn); font-weight: 600; }
+
+/* ===== 扣款月曆 ===== */
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-head { text-align: center; font-size: .75rem; color: var(--muted); padding: 2px 0; }
+.cal-cell {
+  min-height: 52px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  padding: 3px 4px;
+  display: flex;
+  flex-direction: column;
+  font-size: .72rem;
+  line-height: 1.25;
+  min-width: 0;
+}
+.cal-cell.empty { background: transparent; }
+.cal-cell .cd { color: var(--muted); }
+.cal-cell.has { background: var(--primary-soft); }
+.cal-cell.has .cd { color: var(--text); font-weight: 700; }
+.cal-cell .ca { font-weight: 700; overflow-wrap: anywhere; }
+.cal-cell .cn { color: var(--muted); }
+.cal-cell.done { background: var(--ok-soft); }
+.cal-cell.done .cn { color: var(--ok); font-weight: 700; }
+.cal-cell.today { outline: 2px solid var(--primary); }
 
 /* ===== 標的切換 ===== */
 .sym-pick { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 6px; }

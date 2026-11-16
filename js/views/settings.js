@@ -1,31 +1,22 @@
 // 設定：規則數字、匯率、資料備份（匯出／匯入／清除）
-import { getState, save, defaultRules, exportData, validateImport, importData, clearAll } from '../store.js';
+import { getState, save, defaultRules, exportData, validateImport, importData, clearAll, CATS } from '../store.js';
 import { getMarket, fxOf } from '../market.js';
 import { todayStr, esc, isNum } from '../util.js';
 import { pageHead, chip, readValue, confirmBox, toast, changed } from '../ui.js';
 
 const GROUPS = [
-  ['合約', [
-    ['perTradePct', '每筆合約最多虧', '% 合約帳戶', '停損觸發時，最多虧合約帳戶的幾 %。常見 1～2%'],
-    ['maxLev', '槓桿上限', '倍', '超過就不准開'],
-    ['contractCapPct', '合約帳戶上限', '% 投資資產', '合約帳戶最多放多少錢'],
-    ['riskBudgetPct', '總風險預算', '% 投資資產', '所有合約的停損同時觸發，最多虧多少'],
+  ['配置', [
+    ['bandPct', '容許偏離', '%', '實際比例和目標差超過這個，才提醒調整'],
+    ['singleCapPct', '單一標的上限', '% 投資資產', '個股或單一幣種（ETF、債券不算）'],
+    ['platformCapPct', '加密資產單一平台上限', '% 加密資產', '同一個交易所最多放多少'],
   ]],
-  ['資產結構', [
-    ['satCapPct', '衛星桶上限', '%', '個股、主題 ETF、合約帳戶加起來'],
-    ['singleCapPct', '單一個股上限', '%', '股票市值＋合約持倉價值'],
-    ['efMonths', '預備金目標', '個月生活費', '不夠時，每月定投先撥一半存預備金'],
-    ['coreUsPct', '核心桶美股比例', '%', '其餘是台股'],
+  ['預備金與質押', [
+    ['efMonths', '預備金目標', '個月生活費', '不夠時先補預備金，再增加投資'],
+    ['pledgeWarnPct', '質押維持率提醒線', '%', '低於這個就提醒'],
+    ['pledgeCallPct', '質押追繳線', '%', '看你的券商，一般是 130%'],
   ]],
-  ['定投', [
-    ['fear', '極度恐懼門檻', '指數低於', 'CNN 恐懼貪婪指數'],
-    ['greed', '極度貪婪門檻', '指數高於等於', ''],
-    ['fearMult', '極度恐懼時定投', '倍', ''],
-    ['greedMult', '極度貪婪時定投', '倍', ''],
-  ]],
-  ['下單前', [
-    ['chasePct', '追高門檻', '% 高於 60 日線', '進場價比 60 日線高超過這個就算追高'],
-    ['minRR', '最低盈虧比', '', '預期賺的 ÷ 可能賠的'],
+  ['買進前', [
+    ['chasePct', '追高門檻', '% 高於 60 日線', '現價比 60 日線高超過這個就算追高'],
     ['coolHours', '冷靜期', '小時', '因為別人推薦才想買，要先等多久'],
     ['opensPerDay', '每天打開上限', '次', '越常看盤越容易衝動'],
   ]],
@@ -49,6 +40,7 @@ export function render(el) {
   const R = s.rules;
   const fx = fxOf(s, getMarket());
   const lastExport = s.settings.lastExport ? fmtLocal(s.settings.lastExport) : '還沒備份過';
+  const targetSum = CATS.reduce((a, [k]) => a + (Number(R.targets[k]) || 0), 0);
 
   el.innerHTML = `<div class="view">
     ${pageHead('設定')}
@@ -56,12 +48,18 @@ export function render(el) {
     <section class="card">
       <div class="card-head"><h2>規則</h2>${R.confirmed ? chip('good', '已確認') : chip('warn', '範例數字')}</div>
       <p class="small muted">這些數字決定 App 什麼時候說「可以」、什麼時候說「不行」。改好後按「確認規則」。<b>規則要在冷靜的時候定，不要在想下單的時候改。</b></p>
+      <h3 class="group-title">四大類目標比例（全家）</h3>
+      <div class="form-grid">${CATS.map(([k, l]) => `
+        <label class="field"><span>${l} <small class="muted">%</small></span>
+          <input type="number" inputmode="decimal" step="any" data-target="${k}" value="${R.targets[k]}"></label>`).join('')}</div>
+      <p class="small ${targetSum === 100 ? 'muted' : 'warn-text'}" data-tsum>加起來 ${targetSum}%${targetSum === 100 ? '' : '，要剛好 100%'}</p>
       ${GROUPS.map(([g, fields]) => `
         <h3 class="group-title">${esc(g)}</h3>
-        <div class="form-grid">${fields.map(f => ruleInput(R, f)).join('')}</div>
-        ${g === '定投' ? `<h3 class="group-title">大跌分段加碼</h3><div class="form-grid">${[0, 1, 2].map(i => `
-          <label class="field"><span>第 ${i + 1} 段 <small class="muted">距一年高點跌 %</small></span>
-            <input type="number" inputmode="decimal" step="any" data-tier="${i}" value="${R.dipTiers[i]}"></label>`).join('')}</div>` : ''}`).join('')}
+        <div class="form-grid">${fields.map(f => ruleInput(R, f)).join('')}</div>`).join('')}
+      <h3 class="group-title">大跌分段加碼</h3>
+      <div class="form-grid">${[0, 1, 2].map(i => `
+        <label class="field"><span>第 ${i + 1} 段 <small class="muted">距一年高點跌 %</small></span>
+          <input type="number" inputmode="decimal" step="any" data-tier="${i}" value="${R.dipTiers[i]}"></label>`).join('')}</div>
       <div class="actions">
         <button type="button" class="btn ghost" data-act="reset-rules">恢復預設</button>
         <button type="button" class="btn primary" data-act="confirm">確認規則</button>
@@ -77,7 +75,7 @@ export function render(el) {
 
     <section class="card">
       <h2>💾 資料備份</h2>
-      <p class="muted small">持倉、規則、日誌都存在這台裝置的瀏覽器裡。清除瀏覽紀錄或換裝置時會不見，請定期匯出備份檔。手機和電腦的資料是分開的兩份，要靠匯出／匯入搬移。</p>
+      <p class="muted small">家人、持倉、定期定額、規則、日誌都存在這台裝置的瀏覽器裡。清除瀏覽紀錄或換裝置時會不見，請定期匯出備份檔。手機和電腦的資料是分開的兩份，要靠匯出／匯入搬移。</p>
       <p>上次備份：<b>${lastExport}</b></p>
       <div class="actions">
         <button type="button" class="btn primary" data-act="export">⬇ 匯出備份</button>
@@ -91,7 +89,7 @@ export function render(el) {
 
     <section class="card">
       <h2>ℹ️ 關於</h2>
-      <p class="small muted">投資儀表板 · 第一版<br>
+      <p class="small muted">投資儀表板 · 第二版<br>
         這是幫你守紀律的工具，不是投資建議；數字和規則請依自己的狀況決定。<br>
         <a href="tests/tests.html">開啟自動檢查頁</a>（確認計算規則是否正常）</p>
     </section>
@@ -111,6 +109,19 @@ export function render(el) {
     changed();
     v.querySelector('.card-head .chip').outerHTML = chip('warn', '範例數字');
   }));
+  v.querySelectorAll('[data-target]').forEach(inp => inp.addEventListener('change', () => {
+    const val = readValue(inp);
+    if (!isNum(val) || val < 0 || val > 100) {
+      toast('請填 0～100 的數字');
+      inp.value = R.targets[inp.dataset.target];
+      return;
+    }
+    R.targets[inp.dataset.target] = val;
+    R.confirmed = false;
+    save();
+    changed();
+    render(el);
+  }));
   v.querySelectorAll('[data-tier]').forEach(inp => inp.addEventListener('change', () => {
     const val = readValue(inp);
     const i = Number(inp.dataset.tier);
@@ -127,6 +138,10 @@ export function render(el) {
     render(el);
   }));
   v.querySelector('[data-act="confirm"]').addEventListener('click', () => {
+    if (targetSum !== 100) {
+      toast('四大類目標比例要加起來剛好 100%');
+      return;
+    }
     R.confirmed = true;
     save();
     changed();
@@ -186,7 +201,7 @@ export function render(el) {
     const d = chk.data;
     const summary = `
       備份時間：${esc(fmtLocal(obj.exportedAt))}<br>
-      股票 ${(d.holdings || []).length} 筆、合約 ${(d.contracts || []).length} 張、日誌 ${(d.journal || []).length} 筆<br><br>
+      家人 ${(d.members || []).length || 1} 位、持倉 ${(d.holdings || []).length} 筆、定期定額 ${(d.dca || []).length} 筆、日誌 ${(d.journal || []).length} 筆<br><br>
       <b>匯入會覆蓋目前這台裝置上的所有資料。</b>`;
     const ok = await confirmBox(summary, { title: '匯入備份', ok: '覆蓋並匯入', danger: true });
     if (!ok) return;
@@ -198,7 +213,7 @@ export function render(el) {
 
   // 清除
   v.querySelector('[data-act="clear"]').addEventListener('click', async () => {
-    const ok1 = await confirmBox('清除後，持倉、規則、日誌都會刪除。', { title: '清除全部資料', ok: '繼續', danger: true });
+    const ok1 = await confirmBox('清除後，家人、持倉、定期定額、規則、日誌都會刪除。', { title: '清除全部資料', ok: '繼續', danger: true });
     if (!ok1) return;
     const ok2 = await confirmBox('真的要清除嗎？如果還沒匯出備份，資料將無法復原。', { title: '最後確認', ok: '確定清除', danger: true });
     if (!ok2) return;

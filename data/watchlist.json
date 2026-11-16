@@ -2,5 +2,7 @@
   { "sym": "NVDA", "name": "輝達" },
   { "sym": "0050.TW", "name": "元大台灣50" },
   { "sym": "VOO", "name": "Vanguard S&P 500" },
-  { "sym": "2330.TW", "name": "台積電" }
+  { "sym": "2330.TW", "name": "台積電" },
+  { "sym": "BTC-USD", "name": "比特幣" },
+  { "sym": "ETH-USD", "name": "以太幣" }
 ]

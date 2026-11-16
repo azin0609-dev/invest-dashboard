@@ -1,6 +1,6 @@
 // 離線功能：有網路時一律拿最新版本（並順便存一份），沒網路時改用存好的那份
 // 新增或改名 js / data 檔案時，記得更新下面的 ASSETS 清單與 CACHE 版本號
-const CACHE = 'invest-dashboard-v1';
+const CACHE = 'invest-dashboard-v2';
 const ASSETS = [
   './',
   'index.html',
@@ -14,6 +14,7 @@ const ASSETS = [
   'js/store.js',
   'js/market.js',
   'js/calc.js',
+  'js/dca.js',
   'js/rules.js',
   'js/journal.js',
   'js/chart.js',
@@ -22,7 +23,6 @@ const ASSETS = [
   'js/views/holdings.js',
   'js/views/structure.js',
   'js/views/market.js',
-  'js/views/risk.js',
   'js/views/check.js',
   'js/views/plan.js',
   'js/views/journal.js',

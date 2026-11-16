@@ -125,18 +125,17 @@ export function render(el) {
     <section class="card">
       <h2>這些數字對規則代表什麼</h2>
       <ul class="rule-map">
-        <li><b>恐懼貪婪指數</b> → 每月定投倍數（極度恐懼 ×${R.fearMult}、極度貪婪 ×${R.greedMult}）</li>
         <li><b>大盤距一年高點</b> → 大跌分段加碼（跌 ${R.dipTiers.join('／')}% 各動用一段）</li>
-        <li><b>60／200 日線</b> → 下單前的「不追高」「不接刀」檢查</li>
-        <li><b>其他指標</b> → 只當參考，不直接觸發任何規則</li>
+        <li><b>60／200 日線</b> → 買進前的「不追高」「不接刀」檢查（個股、加密貨幣）</li>
+        <li><b>恐懼貪婪和其他指標</b> → 只當參考，不直接觸發任何規則。定期定額照扣，不看這些</li>
       </ul>
     </section>
 
     <div class="grid-2 wide">
       <section class="card">
         <div class="card-head"><h2>股市恐懼與貪婪</h2><span class="small muted">${f ? (f.src === '手動' ? '手動輸入' : `CNN · ${esc(shortDate(f.date || today))}`) : ''}</span></div>
-        <p class="big-num">${f ? f.v : '—'} <span class="big-sub">${f ? esc(fngLabel(f.v, R)) : '沒有資料'}</span></p>
-        ${meter(f ? f.v : 0, { max: 100, status: f && (f.v < R.fear || f.v >= R.greed) ? 'warn' : 'neutral', ticks: [{ at: R.fear, label: `${R.fear} 恐懼` }, { at: 50, label: '50' }, { at: R.greed, label: `${R.greed} 貪婪` }], label: `恐懼貪婪指數 ${f ? f.v : '無資料'}` })}
+        <p class="big-num">${f ? f.v : '—'} <span class="big-sub">${f ? esc(fngLabel(f.v)) : '沒有資料'}</span></p>
+        ${meter(f ? f.v : 0, { max: 100, status: f && (f.v < 25 || f.v > 75) ? 'warn' : 'neutral', ticks: [{ at: 25, label: '25 極度恐懼' }, { at: 50, label: '50' }, { at: 75, label: '75 極度貪婪' }], label: `恐懼貪婪指數 ${f ? f.v : '無資料'}` })}
         ${m.fng && f?.src !== '手動' ? `<p class="small muted" style="margin-top:22px">一週前 ${m.fng.prevWeek ?? '—'} · 一個月前 ${m.fng.prevMonth ?? '—'}</p>` : '<div style="height:16px"></div>'}
         <label class="field inline-field"><span class="small">自動抓不到時手動填（0～100）</span>
           <input type="number" inputmode="numeric" min="0" max="100" data-fng value="${isNum(s.plan.fngManual) ? s.plan.fngManual : ''}" placeholder="空白＝用自動抓的">

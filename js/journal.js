@@ -21,13 +21,12 @@ export const MOODS = [
 ];
 
 export const ACTIONS = [
-  ['buy', '買進股票'],
-  ['sell', '賣出股票'],
-  ['long', '開多單'],
-  ['short', '開空單'],
+  ['buy', '買進'],
   ['add', '加碼'],
-  ['close', '平倉'],
+  ['sell', '賣出'],
 ];
+// 第一版的合約紀錄，只用來顯示舊資料
+export const ALL_ACTIONS = [...ACTIONS, ['long', '開多單'], ['short', '開空單'], ['close', '平倉']];
 // 會產生「之後要記結果」的動作
 const OPENING = ['buy', 'long', 'short', 'add'];
 

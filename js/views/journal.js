@@ -1,13 +1,13 @@
 // 交易日誌：下單前寫理由和「什麼情況代表我錯了」，事後記結果，統計哪種來源、哪種情緒最常賠錢
-import { getState, save } from '../store.js';
-import { SOURCES, MOODS, ACTIONS, OUTCOMES, label, statsBy } from '../journal.js';
+import { getState, save, memberName } from '../store.js';
+import { SOURCES, MOODS, ACTIONS, ALL_ACTIONS, OUTCOMES, label, statsBy } from '../journal.js';
 import { todayStr, uid, esc, twd, pct, isNum, shortDate } from '../util.js';
 import { pageHead, chip, numField, textField, selectField, readValue, modal, confirmBox, toast, changed, upDown } from '../ui.js';
 
 let draft = null;
 
 function emptyDraft() {
-  return { date: todayStr(), sym: '', action: 'buy', lev: null, amount: null, source: 'self', mood: 'calm', reason: '', wrongIf: '' };
+  return { date: todayStr(), owner: 'me', sym: '', action: 'buy', amount: null, source: 'self', mood: 'calm', reason: '', wrongIf: '' };
 }
 
 /** 從「下單前」帶資料過來 */
@@ -28,13 +28,13 @@ function insight(bySource, byMood) {
   return `<p class="note warn">「${esc(worst.label)}」的 ${worst.closed} 筆，合計 ${twd(worst.pnl)}，勝率 ${pct(worst.winRate, 0)}。下次出現這種狀況，先停下來。</p>`;
 }
 
-function entryRow(j) {
+function entryRow(s, j) {
   const res = j.result
     ? `<span class="chip">${esc(label(OUTCOMES, j.result.outcome))}</span> ${isNum(j.result.pnl) ? upDown(j.result.pnl, twd(j.result.pnl)) : ''}`
     : `<button type="button" class="btn sm" data-res="${j.id}">記結果</button>`;
   return `<li class="list-item">
     <div class="li-main">
-      <div class="li-title">${esc(shortDate(j.date))} · ${esc(j.sym || '—')} · ${esc(label(ACTIONS, j.action))}${isNum(j.lev) && j.lev > 1 ? ` ${j.lev} 倍` : ''}${isNum(j.amount) ? ` · ${twd(j.amount)}` : ''}</div>
+      <div class="li-title">${esc(shortDate(j.date))} · ${esc(j.sym || '—')} · ${esc(label(ALL_ACTIONS, j.action))}${isNum(j.lev) && j.lev > 1 ? ` ${j.lev} 倍` : ''}${isNum(j.amount) ? ` · ${twd(j.amount)}` : ''}${j.owner && j.owner !== 'me' ? ` · ${esc(memberName(s, j.owner))}的帳戶` : ''}</div>
       <div class="row" style="margin:4px 0">${chip('info', label(SOURCES, j.source))}${chip(['calm'].includes(j.mood) ? 'good' : 'warn', label(MOODS, j.mood))}</div>
       ${j.reason ? `<div class="li-sub">理由：${esc(j.reason)}</div>` : ''}
       ${j.wrongIf ? `<div class="li-sub">什麼情況代表錯了：${esc(j.wrongIf)}</div>` : ''}
@@ -62,8 +62,8 @@ export function render(el) {
           <label class="field"><span>日期</span><input type="date" name="date" value="${esc(d.date)}" required></label>
           ${textField('標的', 'sym', d.sym, { placeholder: '例如 NVDA' })}
           ${selectField('動作', 'action', d.action, ACTIONS)}
-          ${numField('槓桿', 'lev', d.lev, { suffix: '倍', placeholder: '股票填 1' })}
-          ${numField('金額', 'amount', d.amount, { suffix: '台幣', hint: '合約填保證金' })}
+          ${selectField('誰的帳戶', 'owner', d.owner, s.members.map(x => [x.id, x.name]))}
+          ${numField('金額', 'amount', d.amount, { suffix: '台幣' })}
           ${selectField('想法從哪來', 'source', d.source, SOURCES)}
           ${selectField('當下情緒', 'mood', d.mood, MOODS)}
           <label class="field span-2"><span>為什麼要做這筆</span><textarea name="reason" rows="2" required>${esc(d.reason)}</textarea></label>
@@ -84,7 +84,7 @@ export function render(el) {
 
     <section class="card">
       <div class="card-head"><h2>紀錄</h2><span class="small muted">${s.journal.length} 筆</span></div>
-      ${s.journal.length ? `<ul class="list">${s.journal.slice(0, 50).map(entryRow).join('')}</ul>` : '<p class="muted">還沒有紀錄。</p>'}
+      ${s.journal.length ? `<ul class="list">${s.journal.slice(0, 50).map(j => entryRow(s, j)).join('')}</ul>` : '<p class="muted">還沒有紀錄。</p>'}
     </section>
   </div>`;
 

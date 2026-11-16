@@ -8,7 +8,6 @@ import * as home from './views/home.js';
 import * as holdings from './views/holdings.js';
 import * as structure from './views/structure.js';
 import * as marketView from './views/market.js';
-import * as risk from './views/risk.js';
 import * as check from './views/check.js';
 import * as plan from './views/plan.js';
 import * as journal from './views/journal.js';
@@ -20,13 +19,12 @@ const ROUTES = [
   { re: /^\/holdings$/, view: holdings.render, tab: 'holdings' },
   { re: /^\/structure$/, view: structure.render, tab: 'structure' },
   { re: /^\/market$/, view: marketView.render, tab: 'market' },
-  { re: /^\/risk$/, view: risk.render, tab: 'risk' },
   { re: /^\/check$/, view: check.render, tab: 'check' },
   { re: /^\/plan$/, view: plan.render, tab: 'plan' },
   { re: /^\/journal$/, view: journal.render, tab: 'journal' },
   { re: /^\/settings$/, view: settings.render, tab: 'settings' },
 ];
-const IN_MORE = ['structure', 'market', 'risk', 'journal', 'settings'];
+const IN_MORE = ['structure', 'market', 'journal', 'settings'];
 
 const app = document.getElementById('app');
 const moreBtn = document.getElementById('more-btn');
